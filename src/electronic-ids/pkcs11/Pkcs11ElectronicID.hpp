@@ -36,6 +36,32 @@ enum class Pkcs11ElectronicIDType {
     HrvEID,
     BelEIDV1_7,
     BelEIDV1_8,
+    AKIS_1,
+    AKIS_2,
+    AKIS_3,
+    AKIS_4,
+    AKIS_5,
+    AKIS_6,
+    AKIS_7,
+    AKIS_8,
+    AKIS_9,
+    AKIS_10,
+    AKIS_11,
+    AKIS_12,
+    AKIS_13,
+    AKIS_14,
+    AKIS_15,
+    AKIS_16,
+    AKIS_17,
+    AKIS_18,
+    AKIS_19,
+    AKIS_20,
+    AKIS_21,
+    AKIS_22,
+    eToken_1,
+    eToken_2,
+    ACS_1,
+
 };
 
 struct Pkcs11ElectronicIDModule
@@ -88,7 +114,7 @@ private:
     Type type() const override { return module.type; }
 
     const Pkcs11ElectronicIDModule& module;
-    const std::shared_ptr<PKCS11CardManager> manager;
+    PKCS11CardManager manager;
     PKCS11CardManager::Token authToken;
     PKCS11CardManager::Token signingToken;
 };

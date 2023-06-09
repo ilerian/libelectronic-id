@@ -100,6 +100,39 @@ inline fs::path belgianPkcs11ModulePath()
 #endif
 }
 
+inline fs::path eTokenPkcs11ModulePath()
+{
+#ifdef _WIN32
+    return system32Path() / L"eToken.dll";
+#elif defined __APPLE__
+    return "/Library/Frameworks/eToken.framework/Versions/Current/libeToken.dylib";
+#else // Linux
+    return "/usr/lib/libeTPkcs11.so";
+#endif
+}
+
+inline fs::path AKISPkcs11ModulePath()
+{
+#ifdef _WIN32
+    return system32Path() / L"akisp11.dll";
+#elif defined __APPLE__
+    return "/usr/local/lib/libakisp11.dylib";
+#else // Linux
+    return "/usr/lib/libpkcs11wrapper.so";
+#endif
+}
+
+inline fs::path ACSPkcs11ModulePath()
+{
+#ifdef _WIN32
+    return system32Path() / L"akisp11.dll";
+#elif defined __APPLE__
+    return "/usr/local/lib/libacos5pkcs11.dylib";
+#else // Linux
+    return "/lib/libacospkcs11.so";
+#endif
+}
+
 const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS11_MODULES {
     // EstEIDIDEMIAV1 configuration is here only for testing,
     // it is not enabled in getElectronicID().
@@ -131,9 +164,9 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          ElectronicID::Type::LitEID, // type
          lithuanianPKCS11ModulePath(false).make_preferred(), // path
 
-         JsonWebSignatureAlgorithm::ES384, // authSignatureAlgorithm
-         ELLIPTIC_CURVE_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-         3,
+         JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+         RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+         -1,
          false,
      }},
     {Pkcs11ElectronicIDType::HrvEID,
@@ -170,6 +203,283 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          3,
          true,
      }},
+     {Pkcs11ElectronicIDType::AKIS_1,
+      {
+          "AKIS v_1 (PKCS#11)"s, // name
+          ElectronicID::Type::AKIS_1, // type
+          AKISPkcs11ModulePath().make_preferred(), // path
+
+          JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+          RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+          3,
+          true,
+      }},
+      {Pkcs11ElectronicIDType::AKIS_2,
+        {
+            "AKIS v_2 (PKCS#11)"s, // name
+            ElectronicID::Type::AKIS_2, // type
+            AKISPkcs11ModulePath().make_preferred(), // path
+
+            JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+            RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+            3,
+            true,
+        }},
+
+
+      {Pkcs11ElectronicIDType::AKIS_3,
+          {
+              "AKIS v_3 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_3, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_4,
+          {
+              "AKIS v_4 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_4, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_5,
+          {
+              "AKIS v_5 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_5, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_6,
+          {
+              "AKIS v_6 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_6, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_7,
+          {
+              "AKIS v_7 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_7, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_8,
+          {
+              "AKIS v_8 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_8, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_9,
+          {
+              "AKIS v_9 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_9, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_10,
+          {
+              "AKIS v_10 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_10, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_11,
+          {
+              "AKIS v_11 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_11, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_12,
+          {
+              "AKIS v_12 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_12, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_13,
+          {
+              "AKIS v_13 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_13, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_14,
+          {
+              "AKIS v_14 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_14, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_15,
+          {
+              "AKIS v_15 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_15, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_16,
+          {
+              "AKIS v_16 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_16, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_17,
+          {
+              "AKIS v_17 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_17, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_18,
+          {
+              "AKIS v_18 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_18, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_19,
+          {
+              "AKIS v_19 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_19, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_20,
+          {
+              "AKIS v_20 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_20, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_21,
+          {
+              "AKIS v_21 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_21, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::AKIS_22,
+          {
+              "AKIS v_22 (PKCS#11)"s, // name
+              ElectronicID::Type::AKIS_22, // type
+              AKISPkcs11ModulePath().make_preferred(), // path
+              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+              3,
+              true,
+          }
+      },
+      {Pkcs11ElectronicIDType::eToken_1,
+                {
+                    "eToken 1 (PKCS#11)"s, // name
+                    ElectronicID::Type::eToken_1, // type
+                    eTokenPkcs11ModulePath().make_preferred(), // path
+                    JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+                    RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+                    3,
+                    true,
+                }
+        },
+      {Pkcs11ElectronicIDType::eToken_2,
+              {
+                  "eToken 2 (PKCS#11)"s, // name
+                  ElectronicID::Type::eToken_2, // type
+                  eTokenPkcs11ModulePath().make_preferred(), // path
+                  JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+                  RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+                  3,
+                  true,
+              }
+      },
+      {Pkcs11ElectronicIDType::ACS_1,
+                {
+                    "ACS 1 (PKCS#11)"s, // name
+                    ElectronicID::Type::ACS_1, // type
+                    ACSPkcs11ModulePath().make_preferred(), // path
+                    JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+                    RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+                    3,
+                    true,
+                }
+        },
 };
 
 const Pkcs11ElectronicIDModule& getModule(Pkcs11ElectronicIDType eidType)
@@ -187,12 +497,12 @@ const Pkcs11ElectronicIDModule& getModule(Pkcs11ElectronicIDType eidType)
 Pkcs11ElectronicID::Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr _card,
                                        Pkcs11ElectronicIDType type) :
     ElectronicID(std::move(_card)),
-    module(getModule(type)), manager(PKCS11CardManager::instance(module.path))
+    module(getModule(type)), manager(module.path)
 {
     bool seenAuthToken = false;
     bool seenSigningToken = false;
 
-    for (const auto& token : manager->tokens()) {
+    for (const auto& token : manager.tokens()) {
         const auto certType = certificateType(token.cert);
         if (certType.isAuthentication()) {
             authToken = token;
@@ -203,7 +513,7 @@ Pkcs11ElectronicID::Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr _card,
         }
     }
     if (!(seenAuthToken && seenSigningToken)) {
-        THROW(SmartCardChangeRequiredError, "Either authentication or signing token is missing");
+     //THROW(SmartCardChangeRequiredError, "Either authentication or signing token is missing");
     }
 }
 
@@ -229,8 +539,8 @@ pcsc_cpp::byte_vector Pkcs11ElectronicID::signWithAuthKey(const pcsc_cpp::byte_v
         validateAuthHashLength(authSignatureAlgorithm(), name(), hash);
 
         const auto signature =
-            manager->sign(authToken, hash, authSignatureAlgorithm().hashAlgorithm(),
-                          reinterpret_cast<const char*>(pin.data()), pin.size());
+            manager.sign(authToken, hash, authSignatureAlgorithm().hashAlgorithm(),
+                         reinterpret_cast<const char*>(pin.data()), pin.size());
         return signature.first;
     } catch (const VerifyPinFailed& e) {
         // Catch and rethrow the VerifyPinFailed error with -1 to inform the caller of the special
@@ -262,8 +572,8 @@ ElectronicID::Signature Pkcs11ElectronicID::signWithSigningKey(const pcsc_cpp::b
         validateSigningHash(*this, hashAlgo, hash);
 
         // TODO: add step for supported algo detection before sign(), see if () below.
-        auto signature = manager->sign(signingToken, hash, hashAlgo,
-                                       reinterpret_cast<const char*>(pin.data()), pin.size());
+        auto signature = manager.sign(signingToken, hash, hashAlgo,
+                                      reinterpret_cast<const char*>(pin.data()), pin.size());
 
         if (!module.supportedSigningAlgorithms.count(signature.second)) {
             THROW(SmartCardChangeRequiredError,
