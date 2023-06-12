@@ -219,6 +219,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
           RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
           3,
           true,
+          false,
       }},
       {Pkcs11ElectronicIDType::AKIS_2,
         {
@@ -230,6 +231,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
             RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
             3,
             true,
+            false,
         }},
 
 
@@ -242,6 +244,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_4,
@@ -253,6 +256,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_5,
@@ -264,6 +268,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_6,
@@ -275,6 +280,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_7,
@@ -286,6 +292,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_8,
@@ -297,6 +304,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_9,
@@ -308,6 +316,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_10,
@@ -319,6 +328,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_11,
@@ -330,6 +340,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_12,
@@ -341,6 +352,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_13,
@@ -352,6 +364,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_14,
@@ -363,6 +376,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_15,
@@ -374,6 +388,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_16,
@@ -385,6 +400,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_17,
@@ -396,6 +412,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_18,
@@ -407,6 +424,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_19,
@@ -418,6 +436,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_20,
@@ -429,6 +448,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_21,
@@ -440,6 +460,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::AKIS_22,
@@ -451,6 +472,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
               3,
               true,
+              false,
           }
       },
       {Pkcs11ElectronicIDType::eToken_1,
@@ -462,6 +484,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
                     RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
                     3,
                     true,
+                    false
                 }
         },
       {Pkcs11ElectronicIDType::eToken_2,
@@ -473,6 +496,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
                   RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
                   3,
                   true,
+                  false
               }
       },
       {Pkcs11ElectronicIDType::ACS_1,
@@ -484,6 +508,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
                     RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
                     3,
                     true,
+                    false
                 }
         },
 };
