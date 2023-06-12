@@ -543,7 +543,7 @@ Pkcs11ElectronicID::Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr _card,
             seenSigningToken = true;
         }
     }
-    if (!(seenAuthToken && seenSigningToken)) {
+    if (!(seenAuthToken || seenSigningToken)) {
         THROW(SmartCardChangeRequiredError, "Either authentication or signing token is missing");
     }
 }
