@@ -146,6 +146,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          ELLIPTIC_CURVE_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
          3,
          false,
+         false,
      }},
     {Pkcs11ElectronicIDType::LitEIDv2,
      {
@@ -157,6 +158,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
          -1,
          false,
+         false,
      }},
     {Pkcs11ElectronicIDType::LitEIDv3,
      {
@@ -164,9 +166,10 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          ElectronicID::Type::LitEID, // type
          lithuanianPKCS11ModulePath(false).make_preferred(), // path
 
-         JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-         RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-         -1,
+         JsonWebSignatureAlgorithm::ES384, // authSignatureAlgorithm
+         ELLIPTIC_CURVE_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+         3,
+         false,
          false,
      }},
     {Pkcs11ElectronicIDType::HrvEID,
@@ -179,6 +182,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
          3,
          true,
+         false,
      }},
     {Pkcs11ElectronicIDType::BelEIDV1_7,
      {
@@ -189,6 +193,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
          RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
          3,
+         true,
          true,
      }},
     // https://github.com/Fedict/eid-mw/wiki/Applet-1.8
@@ -201,6 +206,7 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
          JsonWebSignatureAlgorithm::ES384, // authSignatureAlgorithm
          ELLIPTIC_CURVE_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
          3,
+         true,
          true,
      }},
      {Pkcs11ElectronicIDType::AKIS_1,
@@ -497,12 +503,12 @@ const Pkcs11ElectronicIDModule& getModule(Pkcs11ElectronicIDType eidType)
 Pkcs11ElectronicID::Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr _card,
                                        Pkcs11ElectronicIDType type) :
     ElectronicID(std::move(_card)),
-    module(getModule(type)), manager(module.path)
+    module(getModule(type)), manager(PKCS11CardManager::instance(module.path))
 {
     bool seenAuthToken = false;
     bool seenSigningToken = false;
 
-    for (const auto& token : manager.tokens()) {
+    for (const auto& token : manager->tokens()) {
         const auto certType = certificateType(token.cert);
         if (certType.isAuthentication()) {
             authToken = token;
@@ -513,7 +519,7 @@ Pkcs11ElectronicID::Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr _card,
         }
     }
     if (!(seenAuthToken && seenSigningToken)) {
-     //THROW(SmartCardChangeRequiredError, "Either authentication or signing token is missing");
+        THROW(SmartCardChangeRequiredError, "Either authentication or signing token is missing");
     }
 }
 
@@ -539,8 +545,9 @@ pcsc_cpp::byte_vector Pkcs11ElectronicID::signWithAuthKey(const pcsc_cpp::byte_v
         validateAuthHashLength(authSignatureAlgorithm(), name(), hash);
 
         const auto signature =
-            manager.sign(authToken, hash, authSignatureAlgorithm().hashAlgorithm(),
-                         reinterpret_cast<const char*>(pin.data()), pin.size());
+            manager->sign(authToken, hash, authSignatureAlgorithm().hashAlgorithm(),
+                          module.providesExternalPinDialog,
+                          reinterpret_cast<const char*>(pin.data()), pin.size());
         return signature.first;
     } catch (const VerifyPinFailed& e) {
         // Catch and rethrow the VerifyPinFailed error with -1 to inform the caller of the special
@@ -572,8 +579,9 @@ ElectronicID::Signature Pkcs11ElectronicID::signWithSigningKey(const pcsc_cpp::b
         validateSigningHash(*this, hashAlgo, hash);
 
         // TODO: add step for supported algo detection before sign(), see if () below.
-        auto signature = manager.sign(signingToken, hash, hashAlgo,
-                                      reinterpret_cast<const char*>(pin.data()), pin.size());
+        auto signature =
+            manager->sign(signingToken, hash, hashAlgo, module.providesExternalPinDialog,
+                          reinterpret_cast<const char*>(pin.data()), pin.size());
 
         if (!module.supportedSigningAlgorithms.count(signature.second)) {
             THROW(SmartCardChangeRequiredError,
