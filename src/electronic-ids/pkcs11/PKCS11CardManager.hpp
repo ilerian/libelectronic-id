@@ -230,6 +230,7 @@ public:
         std::vector<CK_BYTE> signature(signatureLength);
         C(Sign, session, hashWithPaddingOID.data(), CK_ULONG(hashWithPaddingOID.size()),
           signature.data(), &signatureLength);
+        signature.resize(signatureLength);
 
         return {signature, signatureAlgorithm};
     }
