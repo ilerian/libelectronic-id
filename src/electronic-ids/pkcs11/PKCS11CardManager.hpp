@@ -292,9 +292,10 @@ private:
         case CKR_PIN_LOCKED:
             throw VerifyPinFailed(VerifyPinFailed::Status::PIN_BLOCKED);
         case CKR_TOKEN_NOT_RECOGNIZED:
-            THROW_WITH_CALLER_INFO(SmartCardChangeRequiredError,
+            break;
+            /*THROW_WITH_CALLER_INFO(SmartCardChangeRequiredError,
                                    std::string(apiFunction) + ": token not recognized", file, line,
-                                   function);
+                                   function); */
         case CKR_TOKEN_NOT_PRESENT:
             THROW_WITH_CALLER_INFO(Pkcs11TokenNotPresent,
                                    std::string(apiFunction) + ": token not present", file, line,
