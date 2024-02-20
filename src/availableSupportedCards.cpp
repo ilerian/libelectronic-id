@@ -68,6 +68,7 @@ std::string getATRList()
                     continue;
                 }
                 const unsigned char* byteArray = &reader.cardAtr.data()[0];
+
                 atrList += " " + hexStr(byteArray , reader.cardAtr.size());
 
             }
