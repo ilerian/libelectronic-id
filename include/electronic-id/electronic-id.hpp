@@ -71,6 +71,7 @@ public:
         AKIS_20,
         AKIS_21,
         AKIS_22,
+        AKIS_23,
         eToken_1,
         eToken_2,
         ACS_1,
@@ -147,6 +148,11 @@ private:
 /** Automatic card selection that either returns a vector of card info pointers with available
  * supported cards or throws AutoSelectFailed. */
 std::vector<CardInfo::ptr> availableSupportedCards();
+
+/**
+ * Get set of ATR for logging purposes
+ */
+std::string getATRList();
 
 /** Base class for fatal errors in parameters or environment conditions that do not allow retrying.
  */

@@ -42,6 +42,43 @@ inline CardInfo::ptr connectToCard(const pcsc_cpp::Reader& reader)
 namespace electronic_id
 {
 
+constexpr char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                           '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+std::string hexStr(const unsigned char *data, int len)
+{
+    std::string s(len * 2, ' ');
+    for (int i = 0; i < len; ++i) {
+        s[2 * i]     = hexmap[(data[i] & 0xF0) >> 4];
+        s[2 * i + 1] = hexmap[data[i] & 0x0F];
+    }
+    return s;
+}
+std::string getATRList()
+{
+
+        std::vector<pcsc_cpp::Reader> readers;
+        std::string atrList;
+
+        try {
+            readers = pcsc_cpp::listReaders();
+
+            for (const auto& reader : readers) {
+                if (!reader.isCardInserted()) {
+                    continue;
+                }
+                const unsigned char* byteArray = &reader.cardAtr.data()[0];
+                atrList += " " + hexStr(byteArray , reader.cardAtr.size());
+
+            }
+        }
+        catch (...){
+
+        }
+        return atrList;
+
+}
+
 std::vector<CardInfo::ptr> availableSupportedCards()
 {
     std::vector<pcsc_cpp::Reader> readers;
@@ -60,6 +97,7 @@ std::vector<CardInfo::ptr> availableSupportedCards()
             if (isCardSupported(reader.cardAtr)) {
                 cards.push_back(connectToCard(reader));
             }
+
         }
 
 #ifdef _WIN32

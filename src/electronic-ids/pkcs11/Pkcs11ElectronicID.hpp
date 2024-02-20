@@ -58,6 +58,7 @@ enum class Pkcs11ElectronicIDType {
     AKIS_20,
     AKIS_21,
     AKIS_22,
+    AKIS_23,
     eToken_1,
     eToken_2,
     ACS_1,

@@ -475,6 +475,18 @@ const std::map<Pkcs11ElectronicIDType, Pkcs11ElectronicIDModule> SUPPORTED_PKCS1
               false,
           }
       },
+        {Pkcs11ElectronicIDType::AKIS_23,
+         {
+             "AKIS v_22 (PKCS#11)"s, // name
+             ElectronicID::Type::AKIS_23, // type
+             AKISPkcs11ModulePath().make_preferred(), // path
+             JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
+             RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
+             3,
+             false,
+             false,
+         }
+        },
       {Pkcs11ElectronicIDType::eToken_1,
                 {
                     "eToken 1 (PKCS#11)"s, // name
