@@ -323,6 +323,13 @@ const std::map<byte_vector, ElectronicIDConstructor> SUPPORTED_ATRS = {
          return std::make_unique<Pkcs11ElectronicID>(std::move(card),
                                                      Pkcs11ElectronicIDType::AKIS_23);
      }},
+    // AKIS_24
+    {{0x3B, 0x9F, 0x97, 0x81, 0x31, 0xFE, 0x45, 0x80, 0x65, 0x54, 0x43, 0xD3, 0x23, 0x02,
+        0x31, 0xC0, 0x73, 0xF6, 0x21, 0x80, 0x81, 0x05, 0x52 },
+     [](SmartCard::ptr&& card) {
+         return std::make_unique<Pkcs11ElectronicID>(std::move(card),
+                                                     Pkcs11ElectronicIDType::AKIS_24);
+     }},
 
 };
 

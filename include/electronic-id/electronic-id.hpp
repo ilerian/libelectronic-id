@@ -72,6 +72,7 @@ public:
         AKIS_21,
         AKIS_22,
         AKIS_23,
+        AKIS_24,
         eToken_1,
         eToken_2,
         ACS_1,
