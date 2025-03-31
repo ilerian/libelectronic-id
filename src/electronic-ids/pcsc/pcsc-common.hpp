@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,44 +31,45 @@
 namespace electronic_id
 {
 
-inline pcsc_cpp::byte_vector
-getCertificate(pcsc_cpp::SmartCard& card,
-               const std::vector<pcsc_cpp::byte_vector>& selectCertFileCmds)
+inline pcsc_cpp::byte_vector getCertificate(pcsc_cpp::SmartCard& card,
+                                            const pcsc_cpp::CommandApdu& selectCertFileCmd)
 {
-    static const size_t MAX_LE_VALUE = 0xb5;
+    static const pcsc_cpp::byte_type MAX_LE_VALUE = 0xb5;
 
-    for (const auto& commandApdu : selectCertFileCmds) {
-        transmitApduWithExpectedResponse(card, commandApdu);
-    }
+    transmitApduWithExpectedResponse(card, selectCertFileCmd);
 
     const auto length = readDataLengthFromAsn1(card);
 
     return readBinary(card, length, MAX_LE_VALUE);
 }
 
-inline pcsc_cpp::byte_vector addPaddingToPin(const pcsc_cpp::byte_vector& pin, size_t paddingLength,
-                                             pcsc_cpp::byte_vector::value_type paddingChar)
+PCSC_CPP_CONSTEXPR_VECTOR inline pcsc_cpp::byte_vector
+addPaddingToPin(pcsc_cpp::byte_vector&& pin, size_t paddingLength, pcsc_cpp::byte_type paddingChar)
 {
-    auto paddedPin = pin;
-    paddedPin.resize(std::max(pin.size(), paddingLength), paddingChar);
-    return paddedPin;
+    if (pin.capacity() < paddingLength) {
+        THROW(ProgrammingError,
+              "PIN buffer does not have enough capacity to pad without reallocation");
+    }
+    if (pin.size() < paddingLength) {
+        pin.insert(pin.end(), paddingLength - pin.size(), paddingChar);
+    }
+    return std::move(pin);
 }
 
-inline void verifyPin(pcsc_cpp::SmartCard& card, pcsc_cpp::byte_vector::value_type p2,
-                      const pcsc_cpp::byte_vector& pin, size_t pinMinLength, size_t paddingLength,
-                      pcsc_cpp::byte_vector::value_type paddingChar)
+inline void verifyPin(pcsc_cpp::SmartCard& card, pcsc_cpp::byte_type p2,
+                      pcsc_cpp::byte_vector&& pin, uint8_t pinMinLength, size_t paddingLength,
+                      pcsc_cpp::byte_type paddingChar)
 {
-    const pcsc_cpp::CommandApdu VERIFY_PIN {0x00, 0x20, 0x00, p2};
     pcsc_cpp::ResponseApdu response;
 
     if (card.readerHasPinPad()) {
-        const auto verifyPin =
-            pcsc_cpp::CommandApdu {VERIFY_PIN, addPaddingToPin({}, paddingLength, paddingChar)};
-        response = card.transmitCTL(verifyPin, 0, uint8_t(pinMinLength));
+        const pcsc_cpp::CommandApdu verifyPin {0x00, 0x20, 0x00, p2,
+                                               pcsc_cpp::byte_vector(paddingLength, paddingChar)};
+        response = card.transmitCTL(verifyPin, 0, pinMinLength);
 
     } else {
-        const auto verifyPin =
-            pcsc_cpp::CommandApdu {VERIFY_PIN, addPaddingToPin(pin, paddingLength, paddingChar)};
+        const pcsc_cpp::CommandApdu verifyPin {
+            0x00, 0x20, 0x00, p2, addPaddingToPin(std::move(pin), paddingLength, paddingChar)};
 
         response = card.transmit(verifyPin);
     }
@@ -123,26 +124,17 @@ inline pcsc_cpp::byte_vector internalAuthenticate(pcsc_cpp::SmartCard& card,
                                                   const pcsc_cpp::byte_vector& hash,
                                                   const std::string& cardType)
 {
-    static const pcsc_cpp::CommandApdu INTERNAL_AUTHENTICATE {0x00, 0x88, 0x00, 0x00};
-
-    auto internalAuth = pcsc_cpp::CommandApdu {INTERNAL_AUTHENTICATE, hash};
-    // LE is needed in case of protocol T1.
-    // TODO: Implement this in libpcsc-cpp.
-    if (card.protocol() == pcsc_cpp::SmartCard::Protocol::T1) {
-        internalAuth.le = 0;
-    }
-
+    pcsc_cpp::CommandApdu internalAuth {0x00, 0x88, 0x00, 0x00, hash, 0};
     const auto response = card.transmit(internalAuth);
 
     if (response.sw1 == pcsc_cpp::ResponseApdu::WRONG_LENGTH) {
         THROW(SmartCardError,
-              cardType + ": Wrong data length in command INTERNAL AUTHENTICATE argument: "
-                  + pcsc_cpp::bytes2hexstr(response.toBytes()));
+              cardType
+                  + ": Wrong data length in command INTERNAL AUTHENTICATE argument: " + response);
     }
     if (!response.isOK()) {
         THROW(SmartCardError,
-              cardType + ": Command INTERNAL AUTHENTICATE failed with error "
-                  + pcsc_cpp::bytes2hexstr(response.toBytes()));
+              cardType + ": Command INTERNAL AUTHENTICATE failed with error " + response);
     }
 
     return response.data;
@@ -152,29 +144,33 @@ inline pcsc_cpp::byte_vector computeSignature(pcsc_cpp::SmartCard& card,
                                               const pcsc_cpp::byte_vector& hash,
                                               const std::string& cardType)
 {
-    static const pcsc_cpp::CommandApdu COMPUTE_SIGNATURE {0x00, 0x2A, 0x9E, 0x9A};
-
-    auto internalAuth = pcsc_cpp::CommandApdu {COMPUTE_SIGNATURE, hash};
-    // LE is needed in case of protocol T1.
-    // TODO: Implement this in libpcsc-cpp.
-    if (card.protocol() == pcsc_cpp::SmartCard::Protocol::T1) {
-        internalAuth.le = 0;
-    }
-
-    const auto response = card.transmit(internalAuth);
+    pcsc_cpp::CommandApdu computeSignature {0x00, 0x2A, 0x9E, 0x9A, hash, 0};
+    const auto response = card.transmit(computeSignature);
 
     if (response.sw1 == pcsc_cpp::ResponseApdu::WRONG_LENGTH) {
         THROW(SmartCardError,
-              cardType + ": Wrong data length in command COMPUTE SIGNATURE argument: "
-                  + pcsc_cpp::bytes2hexstr(response.toBytes()));
+              cardType + ": Wrong data length in command COMPUTE SIGNATURE argument: " + response);
     }
     if (!response.isOK()) {
         THROW(SmartCardError,
-              cardType + ": Command COMPUTE SIGNATURE failed with error "
-                  + pcsc_cpp::bytes2hexstr(response.toBytes()));
+              cardType + ": Command COMPUTE SIGNATURE failed with error " + response);
     }
 
     return response.data;
+}
+
+inline pcsc_cpp::byte_type selectSecurityEnv(pcsc_cpp::SmartCard& card, pcsc_cpp::byte_type env,
+                                             pcsc_cpp::byte_type signatureAlgo,
+                                             pcsc_cpp::byte_type keyReference,
+                                             const std::string& cardType)
+{
+    const auto response = card.transmit(
+        {0x00, 0x22, 0x41, env, {0x80, 0x01, signatureAlgo, 0x84, 0x01, keyReference}});
+
+    if (!response.isOK()) {
+        THROW(SmartCardError, cardType + ": Command SET ENV failed with error " + response);
+    }
+    return signatureAlgo;
 }
 
 } // namespace electronic_id

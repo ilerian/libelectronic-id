@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,8 @@
 
 #include "enums.hpp"
 
-#include "pcsc-cpp/pcsc-cpp.hpp"
-
-#include <memory>
+#include <optional>
+#include <functional>
 
 namespace electronic_id
 {
@@ -37,9 +36,11 @@ class ElectronicID
 {
 public:
     using ptr = std::shared_ptr<ElectronicID>;
-    using PinMinMaxLength = std::pair<size_t, size_t>;
+    using PinMinMaxLength = std::pair<uint8_t, uint8_t>;
     using PinRetriesRemainingAndMax = std::pair<uint8_t, int8_t>;
-    using Signature = std::pair<pcsc_cpp::byte_vector, SignatureAlgorithm>;
+    using byte_vector = pcsc_cpp::byte_vector;
+    using byte_type = pcsc_cpp::byte_type;
+    using Signature = std::pair<byte_vector, SignatureAlgorithm>;
 
     enum Type {
         EstEID,
@@ -47,8 +48,10 @@ public:
         LatEID,
         LitEID,
         HrvEID,
-        BelEIDV1_7,
-        BelEIDV1_8,
+        BelEID,
+        CzeEID,
+        LuxtrustV2,
+        LuxEID,
         AKIS_1,
         AKIS_2,
         AKIS_3,
@@ -94,8 +97,8 @@ public:
 
     virtual PinRetriesRemainingAndMax authPinRetriesLeft() const = 0;
 
-    virtual pcsc_cpp::byte_vector signWithAuthKey(const pcsc_cpp::byte_vector& pin,
-                                                  const pcsc_cpp::byte_vector& hash) const = 0;
+    virtual pcsc_cpp::byte_vector signWithAuthKey(byte_vector&& pin,
+                                                  const byte_vector& hash) const = 0;
 
     // Functions related to signing.
     virtual const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const = 0;
@@ -106,13 +109,19 @@ public:
 
     virtual PinRetriesRemainingAndMax signingPinRetriesLeft() const = 0;
 
-    virtual Signature signWithSigningKey(const pcsc_cpp::byte_vector& pin,
-                                         const pcsc_cpp::byte_vector& hash,
+    virtual Signature signWithSigningKey(byte_vector&& pin, const byte_vector& hash,
                                          const HashAlgorithm hashAlgo) const = 0;
 
     // General functions.
     virtual bool allowsUsingLettersAndSpecialCharactersInPin() const { return false; }
     virtual bool providesExternalPinDialog() const { return false; }
+
+    /** Extension point for releasing the resources held by the ElectronicID object.
+     * By default, this function does nothing. It serves as an extension point for
+     * Pkcs11ElectronicID which needs to release the PKCS#11 module before the application exits to
+     * prevent potential crashes. */
+    virtual void release() const {}
+
     virtual std::string name() const = 0;
     virtual Type type() const = 0;
 
@@ -123,6 +132,10 @@ protected:
 
     pcsc_cpp::SmartCard::ptr card;
 };
+
+using ElectronicIDConstructor = std::function<ElectronicID::ptr(const pcsc_cpp::Reader&)>;
+
+std::optional<ElectronicIDConstructor> findMaskedATR(const pcsc_cpp::byte_vector& atr);
 
 bool isCardSupported(const pcsc_cpp::byte_vector& atr);
 
@@ -204,6 +217,12 @@ class SmartCardError : public Error
 class Pkcs11Error : public Error
 {
     using Error::Error;
+};
+
+/** The PKCS#11 library and/or slot does not recognize the token in the slot. */
+class Pkcs11TokenNotRecognized : public Pkcs11Error
+{
+    using Pkcs11Error::Pkcs11Error;
 };
 
 /** Smart card was not present in its slot at the time that a PKCS#11 function was invoked. */

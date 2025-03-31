@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,37 +25,36 @@
 #include "pcsc-common.hpp"
 
 // FINEID specification:
+// App 3.0:
 // https://dvv.fi/documents/16079645/17324923/S1v30.pdf/0bad6ff1-1617-1b1f-ab49-56a2f36ecd38/S1v30.pdf
+// Imp 3.0:
+// https://dvv.fi/documents/16079645/17324923/S4-1v30%20(1).pdf/9ed19b95-098d-ec6b-6f31-8147d1f87663/S4-1v30%20(1).pdf
+// Imp 3.1:
+// https://dvv.fi/documents/16079645/17324992/S4-1v31.pdf/ca3e699e-fae8-aea2-9ce3-28846d2ae95a/S4-1v31.pdf
+// App 4.0:
+// https://dvv.fi/documents/16079645/17324992/S1v40+(1).pdf/56a167fe-9f26-1fda-7d76-cfbbb29d184e/S1v40+(1).pdf
+// Imp 4.0:
+// https://dvv.fi/documents/16079645/17324992/S4-1v40.pdf/55bddc08-6893-b4b4-73fa-24dced600198/S4-1v40.pdf
 
 using namespace pcsc_cpp;
 
 namespace
 {
 
-const byte_vector SELECT_MAIN_AID {0x00, 0xA4, 0x04, 0x00, 0x0C, 0xa0, 0x00, 0x00, 0x00,
-                                   0x63, 0x50, 0x4b, 0x43, 0x53, 0x2d, 0x31, 0x35};
+const auto SELECT_MAIN_AID = CommandApdu::select(
+    0x04, {0xa0, 0x00, 0x00, 0x00, 0x63, 0x50, 0x4b, 0x43, 0x53, 0x2d, 0x31, 0x35});
+const auto SELECT_AUTH_CERT_FILE = CommandApdu::select(0x08, {0x43, 0x31});
+const auto SELECT_SIGN_CERT_FILE_V3 = CommandApdu::select(0x08, {0x50, 0x16, 0x43, 0x35});
+const auto SELECT_SIGN_CERT_FILE_V4 = CommandApdu::select(0x08, {0x50, 0x16, 0x43, 0x32});
 
-const byte_vector SELECT_MASTER_FILE {0x00, 0xa4, 0x00, 0x0C, 0x02, 0x3f, 0x00};
-
-const std::vector<byte_vector> SELECT_AUTH_CERT_FILE = {
-    SELECT_MAIN_AID,
-    {0x00, 0xA4, 0x08, 0x0C, 0x02, 0x43, 0x31},
-};
-const std::vector<byte_vector> SELECT_SIGN_CERT_FILE = {
-    SELECT_MAIN_AID,
-    // {0x00, 0xA4, 0x08, 0x0C, 0x04, 0x50, 0x16, 0x43, 0x32}, // RSA
-    {0x00, 0xA4, 0x08, 0x0C, 0x04, 0x50, 0x16, 0x43, 0x35}, // ECDSA
-};
-
-const byte_vector::value_type PIN_PADDING_CHAR = 0x00;
-const byte_vector::value_type AUTH_PIN_REFERENCE = 0x11;
-const byte_vector::value_type SIGNING_PIN_REFERENCE = 0x82;
-const byte_vector::value_type AUTH_KEY_REFERENCE = 0x01;
-// const byte_vector::value_type SIGNING_KEY_REFERENCE = 0x02 // RSA
-const byte_vector::value_type SIGNING_KEY_REFERENCE = 0x03;
-// const byte_vector::value_type RSA_PKCS15_ALGO = 0x02
-const byte_vector::value_type ECDSA_ALGO = 0x04;
-const byte_vector::value_type RSA_PSS_ALGO = 0x05;
+constexpr byte_type PIN_PADDING_CHAR = 0x00;
+constexpr byte_type AUTH_PIN_REFERENCE = 0x11;
+constexpr byte_type SIGNING_PIN_REFERENCE = 0x82;
+constexpr byte_type AUTH_KEY_REFERENCE = 0x01;
+constexpr byte_type SIGNING_KEY_REFERENCE_V3 = 0x03;
+constexpr byte_type SIGNING_KEY_REFERENCE_V4 = 0x02;
+constexpr byte_type ECDSA_ALGO = 0x04;
+constexpr byte_type RSA_PSS_ALGO = 0x05;
 
 } // namespace
 
@@ -64,14 +63,15 @@ namespace electronic_id
 
 byte_vector FinEIDv3::getCertificateImpl(const CertificateType type) const
 {
+    transmitApduWithExpectedResponse(*card, SELECT_MAIN_AID);
     return electronic_id::getCertificate(
-        *card, type.isAuthentication() ? SELECT_AUTH_CERT_FILE : SELECT_SIGN_CERT_FILE);
+        *card, type.isAuthentication() ? SELECT_AUTH_CERT_FILE : SELECT_SIGN_CERT_FILE_V3);
 }
 
-byte_vector FinEIDv3::signWithAuthKeyImpl(const byte_vector& pin, const byte_vector& hash) const
+byte_vector FinEIDv3::signWithAuthKeyImpl(byte_vector&& pin, const byte_vector& hash) const
 {
-    return sign(authSignatureAlgorithm().hashAlgorithm(), hash, pin, AUTH_PIN_REFERENCE,
-                authPinMinMaxLength(), AUTH_KEY_REFERENCE, RSA_PSS_ALGO, 0);
+    return sign(authSignatureAlgorithm().hashAlgorithm(), hash, std::move(pin), AUTH_PIN_REFERENCE,
+                authPinMinMaxLength(), AUTH_KEY_REFERENCE, RSA_PSS_ALGO, 0x00);
 }
 
 ElectronicID::PinRetriesRemainingAndMax FinEIDv3::authPinRetriesLeftImpl() const
@@ -84,12 +84,11 @@ const std::set<SignatureAlgorithm>& FinEIDv3::supportedSigningAlgorithms() const
     return ELLIPTIC_CURVE_SIGNATURE_ALGOS();
 }
 
-ElectronicID::Signature FinEIDv3::signWithSigningKeyImpl(const byte_vector& pin,
-                                                         const byte_vector& hash,
+ElectronicID::Signature FinEIDv3::signWithSigningKeyImpl(byte_vector&& pin, const byte_vector& hash,
                                                          const HashAlgorithm hashAlgo) const
 {
-    return {sign(hashAlgo, hash, pin, SIGNING_PIN_REFERENCE, signingPinMinMaxLength(),
-                 SIGNING_KEY_REFERENCE, ECDSA_ALGO, 0x40),
+    return {sign(hashAlgo, hash, std::move(pin), SIGNING_PIN_REFERENCE, signingPinMinMaxLength(),
+                 SIGNING_KEY_REFERENCE_V3, ECDSA_ALGO, 0x40),
             {SignatureAlgorithm::ES, hashAlgo}};
 }
 
@@ -98,88 +97,104 @@ ElectronicID::PinRetriesRemainingAndMax FinEIDv3::signingPinRetriesLeftImpl() co
     return pinRetriesLeft(SIGNING_PIN_REFERENCE);
 }
 
-byte_vector FinEIDv3::sign(const HashAlgorithm hashAlgo, const byte_vector& hash,
-                           const byte_vector& pin, byte_vector::value_type pinReference,
-                           PinMinMaxLength pinMinMaxLength, byte_vector::value_type keyReference,
-                           byte_vector::value_type signatureAlgo, byte_vector::value_type LE) const
+byte_vector FinEIDv3::sign(const HashAlgorithm hashAlgo, const byte_vector& hash, byte_vector&& pin,
+                           byte_type pinReference, PinMinMaxLength pinMinMaxLength,
+                           byte_type keyReference, byte_type signatureAlgo, byte_type LE) const
 {
     if (signatureAlgo != ECDSA_ALGO && hashAlgo.isSHA3()) {
         THROW(ArgumentFatalError, "No OID for algorithm " + std::string(hashAlgo));
     }
 
     switch (hashAlgo) {
-    case HashAlgorithm::SHA224:
-    case HashAlgorithm::SHA3_224:
+        using enum HashAlgorithm::HashAlgorithmEnum;
+    case SHA224:
+    case SHA3_224:
         signatureAlgo |= 0x30;
         break;
-    case HashAlgorithm::SHA256:
-    case HashAlgorithm::SHA3_256:
+    case SHA256:
+    case SHA3_256:
         signatureAlgo |= 0x40;
         break;
-    case HashAlgorithm::SHA384:
-    case HashAlgorithm::SHA3_384:
+    case SHA384:
+    case SHA3_384:
         signatureAlgo |= 0x50;
         break;
-    case HashAlgorithm::SHA512:
-    case HashAlgorithm::SHA3_512:
+    case SHA512:
+    case SHA3_512:
         signatureAlgo |= 0x60;
         break;
     default:
         THROW(ArgumentFatalError, "No OID for algorithm " + std::string(hashAlgo));
     }
 
-    transmitApduWithExpectedResponse(*card, SELECT_MASTER_FILE);
-
-    verifyPin(*card, pinReference, pin, pinMinMaxLength.first, pinMinMaxLength.second,
+    verifyPin(*card, pinReference, std::move(pin), pinMinMaxLength.first, pinMinMaxLength.second,
               PIN_PADDING_CHAR);
     // Select security environment for COMPUTE SIGNATURE.
-    byte_vector selectSecurityEnv {0x00, 0x22,          0x41, 0xB6, 0x06,        0x80,
-                                   0x01, signatureAlgo, 0x84, 0x01, keyReference};
-    transmitApduWithExpectedResponse(*card, selectSecurityEnv);
+    selectSecurityEnv(*card, 0xB6, signatureAlgo, keyReference, name());
 
-    auto tlv = byte_vector {0x90, byte_vector::value_type(hash.size())};
+    byte_vector tlv {0x90, byte_type(hash.size())};
     tlv.insert(tlv.cend(), hash.cbegin(), hash.cend());
 
-    const auto computeSignature = CommandApdu {{0x00, 0x2A, 0x90, 0xA0}, tlv};
+    const CommandApdu computeSignature {0x00, 0x2A, 0x90, 0xA0, std::move(tlv)};
     const auto response = card->transmit(computeSignature);
 
     if (response.sw1 == ResponseApdu::WRONG_LENGTH) {
         THROW(SmartCardError,
-              "Wrong data length in command COMPUTE SIGNATURE argument: "
-                  + bytes2hexstr(response.toBytes()));
+              "Wrong data length in command COMPUTE SIGNATURE argument: " + response);
     }
-    if (response.sw1 != ResponseApdu::OK) {
-        THROW(SmartCardError,
-              "Command COMPUTE SIGNATURE failed with error " + bytes2hexstr(response.toBytes()));
+    if (!response.isOK()) {
+        THROW(SmartCardError, "Command COMPUTE SIGNATURE failed with error " + response);
     }
 
-    const auto getSignature = CommandApdu {0x00, 0x2A, 0x9E, 0x9A, {}, LE};
+    const CommandApdu getSignature {0x00, 0x2A, 0x9E, 0x9A, LE};
     const auto signature = card->transmit(getSignature);
 
     if (signature.sw1 == ResponseApdu::WRONG_LENGTH) {
-        THROW(SmartCardError,
-              "Wrong data length in command GET SIGNATURE argument: "
-                  + bytes2hexstr(response.toBytes()));
+        THROW(SmartCardError, "Wrong data length in command GET SIGNATURE argument: " + response);
     }
-    if (signature.sw1 != ResponseApdu::OK) {
-        THROW(SmartCardError,
-              "Command GET SIGNATURE failed with error " + bytes2hexstr(response.toBytes()));
+    if (!signature.isOK()) {
+        THROW(SmartCardError, "Command GET SIGNATURE failed with error " + signature);
     }
 
     return signature.data;
 }
 
-ElectronicID::PinRetriesRemainingAndMax
-FinEIDv3::pinRetriesLeft(byte_vector::value_type pinReference) const
+ElectronicID::PinRetriesRemainingAndMax FinEIDv3::pinRetriesLeft(byte_type pinReference) const
 {
-    const pcsc_cpp::CommandApdu GET_DATA {
-        0x00, 0xCB, 0x00, 0xFF, {0xA0, 0x03, 0x83, 0x01, pinReference}};
+    const auto GET_DATA = smartcard().protocol() == SmartCard::Protocol::T1
+        ? CommandApdu {0x00, 0xCB, 0x00, 0xFF, {0xA0, 0x03, 0x83, 0x01, pinReference}, 0x00}
+        : CommandApdu {0x00, 0xCB, 0x00, 0xFF, {0xA0, 0x03, 0x83, 0x01, pinReference}};
     const auto response = card->transmit(GET_DATA);
     if (!response.isOK()) {
+        THROW(SmartCardError, "Command GET DATA failed with error " + response);
+    }
+    if (response.data.size() < 21) {
         THROW(SmartCardError,
-              "Command GET DATA failed with error " + pcsc_cpp::bytes2hexstr(response.toBytes()));
+              "Command GET DATA failed: received data size " + std::to_string(response.data.size())
+                  + " is less than the expected size of the PIN remaining retries offset 21");
     }
     return {uint8_t(response.data[20]), int8_t(5)};
+}
+
+byte_vector FinEIDv4::getCertificateImpl(const CertificateType type) const
+{
+    transmitApduWithExpectedResponse(*card, SELECT_MAIN_AID);
+    return electronic_id::getCertificate(
+        *card, type.isAuthentication() ? SELECT_AUTH_CERT_FILE : SELECT_SIGN_CERT_FILE_V4);
+}
+
+byte_vector FinEIDv4::signWithAuthKeyImpl(byte_vector&& pin, const byte_vector& hash) const
+{
+    return sign(authSignatureAlgorithm().hashAlgorithm(), hash, std::move(pin), AUTH_PIN_REFERENCE,
+                authPinMinMaxLength(), AUTH_KEY_REFERENCE, ECDSA_ALGO, 0x60);
+}
+
+ElectronicID::Signature FinEIDv4::signWithSigningKeyImpl(byte_vector&& pin, const byte_vector& hash,
+                                                         const HashAlgorithm hashAlgo) const
+{
+    return {sign(hashAlgo, hash, std::move(pin), SIGNING_PIN_REFERENCE, signingPinMinMaxLength(),
+                 SIGNING_KEY_REFERENCE_V4, ECDSA_ALGO, 0x60),
+            {SignatureAlgorithm::ES, hashAlgo}};
 }
 
 } // namespace electronic_id

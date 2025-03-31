@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,32 +24,22 @@
 
 #include "EIDIDEMIA.hpp"
 
+// ESTEID specification:
+// https://installer.id.ee/media/id2019/TD-ID1-Chip-App.pdf
+
 namespace electronic_id
 {
 
 class EstEIDIDEMIAV1 : public EIDIDEMIA
 {
 public:
-    EstEIDIDEMIAV1(pcsc_cpp::SmartCard::ptr _card) : EIDIDEMIA(std::move(_card)) {}
+    using EIDIDEMIA::EIDIDEMIA;
 
 private:
-    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override
-    {
-        return JsonWebSignatureAlgorithm::ES384;
-    }
     PinMinMaxLength authPinMinMaxLength() const override { return {4, 12}; }
-
-    const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const override;
-    SignatureAlgorithm signingSignatureAlgorithm() const override { return SignatureAlgorithm::ES; }
     PinMinMaxLength signingPinMinMaxLength() const override { return {5, 12}; }
-    Signature signWithSigningKeyImpl(const pcsc_cpp::byte_vector& pin,
-                                     const pcsc_cpp::byte_vector& hash,
-                                     const HashAlgorithm hashAlgo) const override;
-
     std::string name() const override { return "EstEID IDEMIA v1"; }
     Type type() const override { return EstEID; }
-
-    const ManageSecurityEnvCmds& selectSecurityEnv() const override;
 };
 
 } // namespace electronic_id

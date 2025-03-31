@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -88,6 +88,7 @@ TEST(electronic_id_test, pkcs11TokenHasAuthenticationCert)
     PKCS11CardManager::Token token;
     token.cert = base64Decode(AUTH_CERT);
     EXPECT_TRUE(certificateType(token.cert).isAuthentication());
+    EXPECT_FALSE(certificateType(token.cert).isSigning());
 }
 
 TEST(electronic_id_test, pkcs11TokenHasSigningCert)
@@ -95,4 +96,5 @@ TEST(electronic_id_test, pkcs11TokenHasSigningCert)
     PKCS11CardManager::Token token;
     token.cert = base64Decode(SIGNING_CERT);
     EXPECT_FALSE(certificateType(token.cert).isAuthentication());
+    EXPECT_TRUE(certificateType(token.cert).isSigning());
 }

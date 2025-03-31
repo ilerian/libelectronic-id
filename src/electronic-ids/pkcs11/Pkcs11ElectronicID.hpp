@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -72,8 +72,6 @@ struct Pkcs11ElectronicIDModule
     const ElectronicID::Type type;
     const std::filesystem::path path;
 
-    const JsonWebSignatureAlgorithm authSignatureAlgorithm;
-    const std::set<SignatureAlgorithm> supportedSigningAlgorithms;
     const int8_t retryMax;
     const bool allowsUsingLettersAndSpecialCharactersInPin;
     const bool providesExternalPinDialog;
@@ -82,7 +80,7 @@ struct Pkcs11ElectronicIDModule
 class Pkcs11ElectronicID : public ElectronicID
 {
 public:
-    Pkcs11ElectronicID(pcsc_cpp::SmartCard::ptr card, Pkcs11ElectronicIDType type);
+    explicit Pkcs11ElectronicID(ElectronicID::Type type);
 
 private:
     bool allowsUsingLettersAndSpecialCharactersInPin() const override
@@ -92,34 +90,27 @@ private:
 
     bool providesExternalPinDialog() const override { return module.providesExternalPinDialog; }
 
-    pcsc_cpp::byte_vector getCertificate(const CertificateType type) const override;
+    byte_vector getCertificate(const CertificateType type) const override;
 
-    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override
-    {
-        return module.authSignatureAlgorithm;
-    }
+    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override;
     PinMinMaxLength authPinMinMaxLength() const override;
 
     PinRetriesRemainingAndMax authPinRetriesLeft() const override;
-    pcsc_cpp::byte_vector signWithAuthKey(const pcsc_cpp::byte_vector& pin,
-                                          const pcsc_cpp::byte_vector& hash) const override;
+    byte_vector signWithAuthKey(byte_vector&& pin, const byte_vector& hash) const override;
 
-    const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const override
-    {
-        return module.supportedSigningAlgorithms;
-    }
+    const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const override;
     PinMinMaxLength signingPinMinMaxLength() const override;
 
     PinRetriesRemainingAndMax signingPinRetriesLeft() const override;
-    Signature signWithSigningKey(const pcsc_cpp::byte_vector& pin,
-                                 const pcsc_cpp::byte_vector& hash,
+    Signature signWithSigningKey(byte_vector&& pin, const byte_vector& hash,
                                  const HashAlgorithm hashAlgo) const override;
 
+    void release() const override;
     std::string name() const override { return module.name; }
     Type type() const override { return module.type; }
 
     const Pkcs11ElectronicIDModule& module;
-    const std::shared_ptr<PKCS11CardManager> manager;
+    mutable std::shared_ptr<PKCS11CardManager> manager;
     PKCS11CardManager::Token authToken;
     PKCS11CardManager::Token signingToken;
 };
