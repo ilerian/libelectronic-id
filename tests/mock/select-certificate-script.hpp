@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include "select-certificate-script-EST-GEMALTO.hpp"
 #include "select-certificate-script-EST-IDEMIA.hpp"
 #include "select-certificate-script-FIN-V3.hpp"
-#include "select-certificate-script-LAT-V1.hpp"
+#include "select-certificate-script-FIN-V4.hpp"
 #include "select-certificate-script-LAT-V2.hpp"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,13 +30,8 @@
 
 #include "electronic-id/electronic-id.hpp"
 
-#include "../common.hpp"
-#include "../scope.hpp"
 #include "../x509.hpp"
 
-#include <cstring>
-#include <string>
-#include <vector>
 #include <unordered_map>
 #include <algorithm>
 #include <filesystem>
@@ -51,11 +46,13 @@
 
 #define C(API, ...) Call(__func__, __FILE__, __LINE__, "C_" #API, fl->C_##API, __VA_ARGS__)
 
-// HANDLE is captured by copy into the lambda, so the auto* function argument is unused,
-// it is only required for satisfying std::unique_ptr constructor requirements.
 #define SCOPE_GUARD_SESSION(HANDLE, CLOSE)                                                         \
-    std::unique_ptr<decltype(HANDLE), std::function<void(decltype(HANDLE)*)>>(                     \
-        &HANDLE, [HANDLE, this](auto*) { C(CLOSE, HANDLE); })
+    make_unique_ptr(&(HANDLE), [this](auto* h) noexcept {                                          \
+        try {                                                                                      \
+            C(CLOSE, *h);                                                                          \
+        } catch (...) {                                                                            \
+        }                                                                                          \
+    });
 
 namespace electronic_id
 {
@@ -78,7 +75,9 @@ public:
     static std::shared_ptr<PKCS11CardManager> instance(const std::filesystem::path& module)
     {
         static std::mutex mutex;
-        static std::unordered_map<std::string, std::shared_ptr<PKCS11CardManager>> instances;
+        // Use weak_ptr to avoid increasing the reference count while providing safe
+        // shared access to the PKCS11CardManager instance for the given module.
+        static std::unordered_map<std::string, std::weak_ptr<PKCS11CardManager>> instances;
 
         // There is no std::hash for std::filesystem::path, use the string value.
         // Note that two different path strings that refer to the same filesystem location
@@ -89,15 +88,29 @@ public:
 
         auto it = instances.find(moduleStr);
         if (it != instances.end()) {
-            return it->second;
+            // If the object has already been destroyed, weak_ptr.lock() returns an empty
+            // shared_ptr.
+            if (auto instancePtr = it->second.lock()) {
+                return instancePtr;
+            }
         }
 
-        auto newInstance = std::shared_ptr<PKCS11CardManager>(new PKCS11CardManager(module));
+        // Custom deleter that also removes the instance from the map.
+        auto deleter = [moduleStr](PKCS11CardManager* manager) {
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                instances.erase(moduleStr);
+            }
+            delete manager;
+        };
+
+        auto newInstance =
+            std::shared_ptr<PKCS11CardManager>(new PKCS11CardManager(module), std::move(deleter));
         instances[moduleStr] = newInstance;
         return newInstance;
     }
 
-    ~PKCS11CardManager()
+    ~PKCS11CardManager() noexcept
     {
         if (!library)
             return;
@@ -124,7 +137,7 @@ public:
         std::vector<CK_BYTE> cert, certID;
         int8_t retry;
         bool pinpad;
-        CK_ULONG minPinLen, maxPinLen;
+        uint8_t minPinLen, maxPinLen;
     };
 
     std::vector<Token> tokens() const
@@ -140,6 +153,7 @@ public:
             try {
                 C(GetTokenInfo, slotID, &tokenInfo);
             } catch (const Pkcs11Error&) {
+                // TODO: log a warning with the exception message.
                 continue;
             }
             CK_SESSION_HANDLE session = 0;
@@ -147,17 +161,15 @@ public:
 
             for (CK_OBJECT_HANDLE obj : findObject(session, CKO_CERTIFICATE)) {
                 result.push_back({
-                    std::string(reinterpret_cast<const char*>(tokenInfo.label),
-                                sizeof(tokenInfo.label)),
-                    std::string(reinterpret_cast<const char*>(tokenInfo.serialNumber),
-                                sizeof(tokenInfo.serialNumber)),
+                    {std::begin(tokenInfo.label), std::end(tokenInfo.label)},
+                    {std::begin(tokenInfo.serialNumber), std::end(tokenInfo.serialNumber)},
                     slotID,
                     attribute(session, obj, CKA_VALUE),
                     attribute(session, obj, CKA_ID),
                     pinRetryCount(tokenInfo.flags),
                     (tokenInfo.flags & CKF_PROTECTED_AUTHENTICATION_PATH) > 0,
-                    tokenInfo.ulMinPinLen,
-                    tokenInfo.ulMaxPinLen,
+                    uint8_t(tokenInfo.ulMinPinLen),
+                    uint8_t(tokenInfo.ulMaxPinLen),
                 });
             }
 
@@ -213,15 +225,15 @@ public:
         //      token.certID.data());
 
         CK_KEY_TYPE keyType = CKK_RSA;
-        CK_ATTRIBUTE attribute = {CKA_KEY_TYPE, &keyType, sizeof(keyType)};
-        C(GetAttributeValue, session, privateKeyHandle[0], &attribute, 1ul);
+        CK_ATTRIBUTE attribute {CKA_KEY_TYPE, &keyType, sizeof(keyType)};
+        C(GetAttributeValue, session, privateKeyHandle[0], &attribute, 1UL);
 
-        const electronic_id::SignatureAlgorithm signatureAlgorithm = {
+        const electronic_id::SignatureAlgorithm signatureAlgorithm {
             keyType == CKK_ECDSA ? electronic_id::SignatureAlgorithm::ES
                                  : electronic_id::SignatureAlgorithm::RS,
             hashAlgo};
 
-        CK_MECHANISM mechanism = {keyType == CKK_ECDSA ? CKM_ECDSA : CKM_RSA_PKCS, nullptr, 0};
+        CK_MECHANISM mechanism {keyType == CKK_ECDSA ? CKM_ECDSA : CKM_RSA_PKCS, nullptr, 0};
         C(SignInit, session, &mechanism, privateKeyHandle[0]);
         std::vector<CK_BYTE> hashWithPaddingOID =
             keyType == CKK_RSA ? addRSAOID(hashAlgo, hash) : hash;
@@ -278,10 +290,9 @@ private:
 
     template <typename Func, typename... Args>
     static void Call(const char* function, const char* file, int line, const char* apiFunction,
-                     Func func, Args... args)
+                     Func&& func, Args... args)
     {
-        CK_RV rv = func(args...);
-        switch (rv) {
+        switch (CK_RV rv = func(args...)) {
         case CKR_OK:
         case CKR_CRYPTOKI_ALREADY_INITIALIZED:
             break;
@@ -295,7 +306,8 @@ private:
             throw VerifyPinFailed(VerifyPinFailed::Status::PIN_BLOCKED);
         case CKR_TOKEN_NOT_RECOGNIZED:
             break;
-            /*THROW_WITH_CALLER_INFO(SmartCardChangeRequiredError,
+            /*
+            THROW_WITH_CALLER_INFO(Pkcs11TokenNotRecognized,
                                    std::string(apiFunction) + ": token not recognized", file, line,
                                    function); */
         case CKR_TOKEN_NOT_PRESENT:
@@ -314,7 +326,7 @@ private:
                 THROW_WITH_CALLER_INFO(Pkcs11Error,
                                        fn + " failed with return code " + pcsc_cpp::int2hexstr(rv),
                                        file, line, function);
-            };
+            }
             break;
         }
         default:
@@ -328,11 +340,11 @@ private:
     std::vector<CK_BYTE> attribute(CK_SESSION_HANDLE session, CK_OBJECT_CLASS obj,
                                    CK_ATTRIBUTE_TYPE attr) const
     {
-        CK_ATTRIBUTE attribute = {attr, nullptr, 0};
-        C(GetAttributeValue, session, obj, &attribute, 1ul);
+        CK_ATTRIBUTE attribute {attr, {}, 0};
+        C(GetAttributeValue, session, obj, &attribute, 1UL);
         std::vector<CK_BYTE> data(attribute.ulValueLen);
         attribute.pValue = data.data();
-        C(GetAttributeValue, session, obj, &attribute, 1ul);
+        C(GetAttributeValue, session, obj, &attribute, 1UL);
         return data;
     }
 
@@ -355,7 +367,7 @@ private:
         return objectHandle;
     }
 
-    static int8_t pinRetryCount(CK_FLAGS flags)
+    static constexpr int8_t pinRetryCount(CK_FLAGS flags) noexcept
     {
         // As PKCS#11 does not provide an API for querying remaining PIN retries, we currently
         // simply assume max retry count of 3, which is quite common. We might need to revisit this

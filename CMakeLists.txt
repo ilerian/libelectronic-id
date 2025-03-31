@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.22)
 if(POLICY CMP0092)
   cmake_policy(SET CMP0092 NEW)
 endif()
@@ -16,18 +16,13 @@ add_library(${PROJECT_NAME}
   src/electronic-ids/common.hpp
   src/electronic-ids/common.cpp
   src/electronic-ids/scope.hpp
+  src/electronic-ids/TLV.hpp
   src/electronic-ids/x509.hpp
   src/electronic-ids/pcsc/EIDIDEMIA.cpp
   src/electronic-ids/pcsc/EIDIDEMIA.hpp
-  src/electronic-ids/pcsc/EstEIDGemalto.cpp
-  src/electronic-ids/pcsc/EstEIDGemalto.hpp
-  src/electronic-ids/pcsc/EstEIDIDEMIA.cpp
   src/electronic-ids/pcsc/EstEIDIDEMIA.hpp
   src/electronic-ids/pcsc/FinEID.cpp
   src/electronic-ids/pcsc/FinEID.hpp
-  src/electronic-ids/pcsc/LatEIDIDEMIACommon.hpp
-  src/electronic-ids/pcsc/LatEIDIDEMIAv1.cpp
-  src/electronic-ids/pcsc/LatEIDIDEMIAv1.hpp
   src/electronic-ids/pcsc/LatEIDIDEMIAv2.cpp
   src/electronic-ids/pcsc/LatEIDIDEMIAv2.hpp
   src/electronic-ids/pcsc/PcscElectronicID.hpp
@@ -49,7 +44,7 @@ target_include_directories(${PROJECT_NAME}
   include
 )
 
-find_package(OpenSSL 1.1.1 REQUIRED)
+find_package(OpenSSL 3.0.0 REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
   pcsc-cpp
@@ -58,9 +53,6 @@ target_link_libraries(${PROJECT_NAME}
   $<$<PLATFORM_ID:Windows>: Shlwapi Crypt32 Ncrypt>
 )
 
-# libpcsc-cpp dependency.
-
-add_subdirectory(lib/libpcsc-cpp)
 
 # Common testing options.
 
@@ -77,12 +69,13 @@ add_executable(${MOCK_TEST_EXE}
   tests/common/verify.hpp
   tests/mock/atrs.hpp
   tests/mock/select-certificate-script.hpp
-  tests/mock/select-certificate-script-EST-GEMALTO.hpp
   tests/mock/select-certificate-script-EST-IDEMIA.hpp
   tests/mock/select-certificate-script-FIN-V3.hpp
-  tests/mock/select-certificate-script-LAT-V1.hpp
+  tests/mock/select-certificate-script-FIN-V4.hpp
   tests/mock/select-certificate-script-LAT-V2.hpp
   tests/mock/test-autoselect-card.cpp
+  tests/mock/test-find-masked-atr.cpp
+  tests/mock/test-is-card-supported.cpp
   tests/mock/test-get-certificate.cpp
   tests/mock/test-pkcs11-token.cpp
 )

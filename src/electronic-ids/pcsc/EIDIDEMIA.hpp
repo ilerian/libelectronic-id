@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,57 +27,42 @@
 namespace electronic_id
 {
 
-struct SelectApplicationIDCmds
-{
-    const pcsc_cpp::byte_vector MAIN_AID;
-    const pcsc_cpp::byte_vector AUTH_AID;
-    const pcsc_cpp::byte_vector SIGN_AID;
-};
-
-struct SelectCertificateCmds
-{
-    const pcsc_cpp::byte_vector AUTH_CERT;
-    const pcsc_cpp::byte_vector SIGN_CERT;
-};
-
-struct ManageSecurityEnvCmds
-{
-    const pcsc_cpp::byte_vector AUTH_ENV;
-    const pcsc_cpp::byte_vector SIGN_ENV;
-};
-
 class EIDIDEMIA : public PcscElectronicID
 {
 public:
+    struct KeyInfo
+    {
+        byte_type id;
+        bool isECC;
+    };
+
     explicit EIDIDEMIA(pcsc_cpp::SmartCard::ptr _card) : PcscElectronicID(std::move(_card)) {}
 
 protected:
-    pcsc_cpp::byte_vector getCertificateImpl(const CertificateType type) const override;
+    byte_vector getCertificateImpl(const CertificateType type) const override;
 
     PinRetriesRemainingAndMax authPinRetriesLeftImpl() const override;
-    pcsc_cpp::byte_vector signWithAuthKeyImpl(const pcsc_cpp::byte_vector& pin,
-                                              const pcsc_cpp::byte_vector& hash) const override;
+    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override
+    {
+        return JsonWebSignatureAlgorithm::ES384;
+    }
+    virtual KeyInfo authKeyRef() const;
+    byte_vector signWithAuthKeyImpl(byte_vector&& pin, const byte_vector& hash) const override;
 
     PinRetriesRemainingAndMax signingPinRetriesLeftImpl() const override;
-    Signature signWithSigningKeyImpl(const pcsc_cpp::byte_vector& pin,
-                                     const pcsc_cpp::byte_vector& hash,
+    const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const override
+    {
+        return ELLIPTIC_CURVE_SIGNATURE_ALGOS();
+    }
+    virtual KeyInfo signKeyRef() const;
+    Signature signWithSigningKeyImpl(byte_vector&& pin, const byte_vector& hash,
                                      const HashAlgorithm hashAlgo) const override;
 
-    virtual const SelectApplicationIDCmds& selectApplicationID() const;
-    virtual const SelectCertificateCmds& selectCertificate() const;
-    virtual const ManageSecurityEnvCmds& selectSecurityEnv() const = 0;
+    PinRetriesRemainingAndMax pinRetriesLeft(byte_type pinReference) const;
 
-    virtual size_t pinBlockLength() const { return authPinMinMaxLength().second; }
-    virtual pcsc_cpp::byte_vector::value_type signingPinReference() const { return 0x85; }
-    virtual SignatureAlgorithm signingSignatureAlgorithm() const = 0;
-    PinRetriesRemainingAndMax pinRetriesLeft(pcsc_cpp::byte_vector::value_type pinReference) const;
-
-    virtual bool useInternalAuthenticateAndRSAWithPKCS1PaddingDuringSigning() const
-    {
-        return false;
-    }
-
-    virtual bool isUpdated() const { return false; }
+    void selectMain() const;
+    void selectADF1() const;
+    void selectADF2() const;
 };
 
 } // namespace electronic_id

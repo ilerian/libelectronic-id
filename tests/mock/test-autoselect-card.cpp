@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,9 @@
 
 #include "../common/selectcard.hpp"
 
-#include "electronic-id/electronic-id.hpp"
-
 #include "atrs.hpp"
 
 #include <gtest/gtest.h>
-
-#include <iostream>
 
 using namespace electronic_id;
 
@@ -37,30 +33,12 @@ TEST(electronic_id_test, autoSelectFailureWithUnsupportedCard)
     EXPECT_THROW({ autoSelectSupportedCard(); }, AutoSelectFailed);
 }
 
-TEST(electronic_id_test, autoSelectSuccessWithSupportedCardEstGEMALTO)
-{
-    PcscMock::setAtr(ESTEID_GEMALTO_V3_5_8_COLD_ATR);
-    auto result = autoSelectSupportedCard();
-    EXPECT_TRUE(result);
-    EXPECT_EQ(result->eid().name(), "EstEID Gemalto v3.5.8");
-    PcscMock::reset();
-}
-
 TEST(electronic_id_test, autoSelectSuccessWithSupportedCardEstIDEMIA)
 {
     PcscMock::setAtr(ESTEID_IDEMIA_V1_ATR);
     auto result = autoSelectSupportedCard();
     EXPECT_TRUE(result);
     EXPECT_EQ(result->eid().name(), "EstEID IDEMIA v1");
-    PcscMock::reset();
-}
-
-TEST(electronic_id_test, autoSelectSuccessWithSupportedCardLatV1)
-{
-    PcscMock::setAtr(LATEID_IDEMIA_V1_ATR);
-    auto result = autoSelectSupportedCard();
-    EXPECT_TRUE(result);
-    EXPECT_EQ(result->eid().name(), "LatEID IDEMIA v1");
     PcscMock::reset();
 }
 
@@ -79,5 +57,14 @@ TEST(electronic_id_test, autoSelectSuccessWithSupportedCardFinV3)
     auto result = autoSelectSupportedCard();
     EXPECT_TRUE(result);
     EXPECT_EQ(result->eid().name(), "FinEID v3");
+    PcscMock::reset();
+}
+
+TEST(electronic_id_test, autoSelectSuccessWithSupportedCardFinV4)
+{
+    PcscMock::setAtr(FINEID_V4_ATR);
+    auto result = autoSelectSupportedCard();
+    EXPECT_TRUE(result);
+    EXPECT_EQ(result->eid().name(), "FinEID v4");
     PcscMock::reset();
 }

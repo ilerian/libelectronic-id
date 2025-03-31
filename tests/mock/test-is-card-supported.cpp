@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,23 +20,24 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "electronic-id/electronic-id.hpp"
 
-#include "EIDIDEMIA.hpp"
+#include <gtest/gtest.h>
 
-namespace electronic_id
+using namespace electronic_id;
+
+const pcsc_cpp::byte_vector EstEIDIDEMIAV1_ATR {0x3b, 0xdb, 0x96, 0x00, 0x80, 0xb1, 0xfe, 0x45,
+                                                0x1f, 0x83, 0x00, 0x12, 0x23, 0x3f, 0x53, 0x65,
+                                                0x49, 0x44, 0x0f, 0x90, 0x00, 0xf1};
+const pcsc_cpp::byte_vector INVALID_ATR {0xaa, 0xbb, 0xcc, 0x40, 0x0a, 0xa5, 0x03,
+                                         0x01, 0x01, 0x01, 0xad, 0x13, 0x11};
+
+TEST(electronic_id_test, isCardSupportedSuccessWithSupportedATR)
 {
+    EXPECT_TRUE(isCardSupported(EstEIDIDEMIAV1_ATR));
+}
 
-class LatEIDIDEMIACommon : public EIDIDEMIA
+TEST(electronic_id_test, isCardSupportedFailureWithUnsupportedATR)
 {
-protected:
-    explicit LatEIDIDEMIACommon(pcsc_cpp::SmartCard::ptr _card) : EIDIDEMIA(std::move(_card)) {}
-
-    PinMinMaxLength authPinMinMaxLength() const override { return {4, 12}; }
-
-    PinMinMaxLength signingPinMinMaxLength() const override { return {6, 12}; }
-
-    Type type() const override { return LatEID; }
-};
-
-} // namespace electronic_id
+    EXPECT_FALSE(isCardSupported(INVALID_ATR));
+}

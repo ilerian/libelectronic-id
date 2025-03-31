@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Estonian Information System Authority
+ * Copyright (c) 2020-2024 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,40 @@
 
 #pragma once
 
-#include "LatEIDIDEMIACommon.hpp"
+#include "EIDIDEMIA.hpp"
+
+#include <map>
 
 namespace electronic_id
 {
 
-class LatEIDIDEMIAV2 : public LatEIDIDEMIACommon
+class LatEIDIDEMIAV2 : public EIDIDEMIA
 {
 public:
     explicit LatEIDIDEMIAV2(pcsc_cpp::SmartCard::ptr _card);
     ~LatEIDIDEMIAV2() override;
     PCSC_CPP_DISABLE_COPY_MOVE(LatEIDIDEMIAV2);
 
-    bool isUpdated() const override;
-
 private:
-    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override
-    {
-        return isUpdated() ? JsonWebSignatureAlgorithm::ES384 : JsonWebSignatureAlgorithm::RS256;
-    }
+    byte_vector getCertificateImpl(const CertificateType type) const override;
 
-    std::string name() const override { return "LatEID IDEMIA v2"; }
+    JsonWebSignatureAlgorithm authSignatureAlgorithm() const override;
+    PinMinMaxLength authPinMinMaxLength() const override { return {4, 12}; }
 
     const std::set<SignatureAlgorithm>& supportedSigningAlgorithms() const override;
-    SignatureAlgorithm signingSignatureAlgorithm() const override { return SignatureAlgorithm::RS; }
+    PinMinMaxLength signingPinMinMaxLength() const override { return {6, 12}; }
 
-    const ManageSecurityEnvCmds& selectSecurityEnv() const override;
+    std::string name() const override { return "LatEID IDEMIA v2"; }
+    Type type() const override { return LatEID; }
+
+    KeyInfo authKeyRef() const override;
+    KeyInfo signKeyRef() const override;
+
+    const byte_vector& readEF_File(byte_vector file,
+                                   std::map<byte_vector, byte_vector>& cache) const;
+    const byte_vector& readDCODInfo(byte_type type,
+                                    std::map<byte_vector, byte_vector>& cache) const;
+    KeyInfo readPrKDInfo(byte_type keyID, std::map<byte_vector, byte_vector>& cache) const;
 
     struct Private;
     std::unique_ptr<Private> data;
