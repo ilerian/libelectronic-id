@@ -53,6 +53,9 @@ target_link_libraries(${PROJECT_NAME}
   $<$<PLATFORM_ID:Windows>: Shlwapi Crypt32 Ncrypt>
 )
 
+# libpcsc-cpp dependency.
+
+add_subdirectory(lib/libpcsc-cpp)
 
 # Common testing options.
 
