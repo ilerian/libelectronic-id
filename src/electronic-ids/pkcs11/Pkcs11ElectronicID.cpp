@@ -58,6 +58,8 @@ inline auto system32Path()
 }
 #endif
 
+const fs::path exePath = getExecutableDir();
+
 inline fs::path lithuanianPKCS11ModulePath()
 {
 #ifdef _WIN32
@@ -110,33 +112,43 @@ inline fs::path belgianPkcs11ModulePath()
 inline fs::path eTokenPkcs11ModulePath()
 {
 #ifdef _WIN32
-    return system32Path() / L"eToken.dll";
+    //return system32Path() / L"eToken.dll";
+        return exePath / L"lib/eToken.dll";
 #elif defined __APPLE__
-    return "/Library/Frameworks/eToken.framework/Versions/Current/libeToken.dylib";
+    //return "/Library/Frameworks/eToken.framework/Versions/Current/libeToken.dylib";
+        return exePath / "lib/libeToken.dylib";
 #else // Linux
-    return "/usr/lib/libeTPkcs11.so";
+    //return "/usr/lib/libeTPkcs11.so";
+        return exePath / "lib/libeTPkcs11.so";
 #endif
 }
 
 inline fs::path AKISPkcs11ModulePath()
 {
 #ifdef _WIN32
-    return system32Path() / L"akisp11.dll";
+    //return system32Path() / L"akisp11.dll";
+    return exePath / L"lib/akisp11.dll";
 #elif defined __APPLE__
-    return "/usr/local/lib/libakisp11.dylib";
+    //return "/usr/local/lib/libakisp11.dylib";
+    return exePath / "lib/libakisp11.dylib";
 #else // Linux
-    return "/usr/lib/libpkcs11wrapper.so";
+    //return "/usr/lib/libpkcs11wrapper.so";
+        return exePath / "lib/libpkcs11wrapper.so";
 #endif
 }
 
 inline fs::path ACSPkcs11ModulePath()
 {
+
 #ifdef _WIN32
-    return system32Path() / L"akisp11.dll";
+    //return system32Path() / L"akisp11.dll";
+    return exePath / "lib/libacospkcs11.so";
 #elif defined __APPLE__
-    return "/usr/local/lib/libacos5pkcs11.dylib";
+    //return "/usr/local/lib/libacos5pkcs11.dylib";
+    return exePath /  "lib/libacospkcs11.so";
 #else // Linux
-    return "/lib/libacospkcs11.so";
+    //return "/lib/libacospkcs11.so";
+        return exePath / "lib/libacospkcs11.so";
 #endif
 }
 
@@ -164,19 +176,22 @@ inline fs::path luxembourgPkcs11ModulePath()
 }
 
 
+
 const std::map<ElectronicID::Type, Pkcs11ElectronicIDModule> SUPPORTED_PKCS11_MODULES {
-    // EstEID configuration is here only for testing,
-    // it is not enabled in getElectronicID().
-    {ElectronicID::Type::EstEID,
+    /* EstEID configuration is here only for testing,
+     it is not enabled in getElectronicID().*/
+    {
+        ElectronicID::Type::EstEID,
      {
          "EstEID IDEMIA v1 (PKCS#11)"s, // name
          ElectronicID::Type::EstEID, // type
          fs::path("opensc-pkcs11.so"), // path
-
          3,
          false,
          false,
-     }},
+     }
+    },
+
     {ElectronicID::Type::LitEID,
      {
          "Lithuanian eID (PKCS#11)"s, // name
@@ -232,337 +247,242 @@ const std::map<ElectronicID::Type, Pkcs11ElectronicIDModule> SUPPORTED_PKCS11_MO
          "Luxembourg eID (PKCS#11)"s, // name
          ElectronicID::Type::LuxEID, // type
          luxembourgPkcs11ModulePath().make_preferred(), // path
-
          3,
          true,
          true,
      }},
-     {Pkcs11ElectronicIDType::AKIS_1,
-      {
-          "AKIS v_1 (PKCS#11)"s, // name
-          ElectronicID::Type::AKIS_1, // type
-          AKISPkcs11ModulePath().make_preferred(), // path
+    {ElectronicID::Type::AKIS_1,
+     {
+         "AKIS v_1 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_1, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_2,
+     {
+         "AKIS v_2 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_2, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
 
-          JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-          RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-          3,
-          false,
-          false,
-      }},
-      {Pkcs11ElectronicIDType::AKIS_2,
-        {
-            "AKIS v_2 (PKCS#11)"s, // name
-            ElectronicID::Type::AKIS_2, // type
-            AKISPkcs11ModulePath().make_preferred(), // path
-
-            JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-            RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-            3,
-            false,
-          false,
-        }},
-
-
-      {Pkcs11ElectronicIDType::AKIS_3,
-          {
-              "AKIS v_3 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_3, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_4,
-          {
-              "AKIS v_4 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_4, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_5,
-          {
-              "AKIS v_5 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_5, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_6,
-          {
-              "AKIS v_6 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_6, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_7,
-          {
-              "AKIS v_7 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_7, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_8,
-          {
-              "AKIS v_8 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_8, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_9,
-          {
-              "AKIS v_9 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_9, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_10,
-          {
-              "AKIS v_10 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_10, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_11,
-          {
-              "AKIS v_11 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_11, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_12,
-          {
-              "AKIS v_12 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_12, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_13,
-          {
-              "AKIS v_13 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_13, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_14,
-          {
-              "AKIS v_14 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_14, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_15,
-          {
-              "AKIS v_15 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_15, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_16,
-          {
-              "AKIS v_16 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_16, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_17,
-          {
-              "AKIS v_17 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_17, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_18,
-          {
-              "AKIS v_18 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_18, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_19,
-          {
-              "AKIS v_19 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_19, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_20,
-          {
-              "AKIS v_20 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_20, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_21,
-          {
-              "AKIS v_21 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_21, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-      {Pkcs11ElectronicIDType::AKIS_22,
-          {
-              "AKIS v_22 (PKCS#11)"s, // name
-              ElectronicID::Type::AKIS_22, // type
-              AKISPkcs11ModulePath().make_preferred(), // path
-              JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-              RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-              3,
-              false,
-              false,
-          }
-      },
-        {Pkcs11ElectronicIDType::AKIS_23,
-         {
-             "AKIS v_23 (PKCS#11)"s, // name
-             ElectronicID::Type::AKIS_23, // type
-             AKISPkcs11ModulePath().make_preferred(), // path
-             JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-             RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-             3,
-             false,
-             false,
-         }
-        },
-        {Pkcs11ElectronicIDType::AKIS_24,
-         {
-             "AKIS v_24 (PKCS#11)"s, // name
-             ElectronicID::Type::AKIS_24, // type
-             AKISPkcs11ModulePath().make_preferred(), // path
-             JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-             RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-             3,
-             false,
-             false,
-         }
-        },
-      {Pkcs11ElectronicIDType::eToken_1,
-                {
-                    "eToken 1 (PKCS#11)"s, // name
-                    ElectronicID::Type::eToken_1, // type
-                    eTokenPkcs11ModulePath().make_preferred(), // path
-                    JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-                    RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-                    3,
-                    true,
-                    false
-                }
-        },
-      {Pkcs11ElectronicIDType::eToken_2,
-              {
-                  "eToken 2 (PKCS#11)"s, // name
-                  ElectronicID::Type::eToken_2, // type
-                  eTokenPkcs11ModulePath().make_preferred(), // path
-                  JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-                  RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-                  3,
-                  true,
-                  false
-              }
-      },
-      {Pkcs11ElectronicIDType::ACS_1,
-                {
-                    "ACS 1 (PKCS#11)"s, // name
-                    ElectronicID::Type::ACS_1, // type
-                    ACSPkcs11ModulePath().make_preferred(), // path
-                    JsonWebSignatureAlgorithm::RS256, // authSignatureAlgorithm
-                    RSA_SIGNATURE_ALGOS(), // supportedSigningAlgorithms
-                    3,
-                    true,
-                    false
-                }
-        },
+    {ElectronicID::Type::AKIS_3,
+     {
+         "AKIS v_3 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_3, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_4,
+     {
+         "AKIS v_4 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_4, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_5,
+     {
+         "AKIS v_5 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_5, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_6,
+     {
+         "AKIS v_6 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_6, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_7,
+     {
+         "AKIS v_7 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_7, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_8,
+     {
+         "AKIS v_8 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_8, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_9,
+     {
+         "AKIS v_9 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_9, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_10,
+     {
+         "AKIS v_10 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_10, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_11,
+     {
+         "AKIS v_11 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_11, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_12,
+     {
+         "AKIS v_12 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_12, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_13,
+     {
+         "AKIS v_13 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_13, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_14,
+     {
+         "AKIS v_14 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_14, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_15,
+     {
+         "AKIS v_15 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_15, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_16,
+     {
+         "AKIS v_16 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_16, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_17,
+     {
+         "AKIS v_17 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_17, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_18,
+     {
+         "AKIS v_18 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_18, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_19,
+     {
+         "AKIS v_19 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_19, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_20,
+     {
+         "AKIS v_20 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_20, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_21,
+     {
+         "AKIS v_21 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_21, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_22,
+     {
+         "AKIS v_22 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_22, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_23,
+     {
+         "AKIS v_23 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_23, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::AKIS_24,
+     {
+         "AKIS v_24 (PKCS#11)"s, // name
+         ElectronicID::Type::AKIS_24, // type
+         AKISPkcs11ModulePath().make_preferred(), // path
+         3,
+         false,
+         false,
+     }},
+    {ElectronicID::Type::eToken_1,
+     {"eToken 1 (PKCS#11)"s, // name
+      ElectronicID::Type::eToken_1, // type
+      eTokenPkcs11ModulePath().make_preferred(), // path
+      3, true, false}},
+    {ElectronicID::Type::eToken_2,
+     {"eToken 2 (PKCS#11)"s, // name
+      ElectronicID::Type::eToken_2, // type
+      eTokenPkcs11ModulePath().make_preferred(), // path
+      3, true, false}},
+    {ElectronicID::Type::ACS_1,
+     {"ACS 1 (PKCS#11)"s, // name
+      ElectronicID::Type::ACS_1, // type
+      ACSPkcs11ModulePath().make_preferred(), // path
+      3, true, false}},
 };
 
 const Pkcs11ElectronicIDModule& getModule(ElectronicID::Type eidType)

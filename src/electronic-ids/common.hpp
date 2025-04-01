@@ -27,6 +27,17 @@
 #include "pcsc-cpp/pcsc-cpp-utils.hpp"
 
 #include <set>
+#include <iostream>
+#include <filesystem>
+#include <string>
+
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
 
 namespace electronic_id
 {
@@ -70,6 +81,35 @@ inline pcsc_cpp::byte_vector addRSAOID(const HashAlgorithm hashAlgo,
     pcsc_cpp::byte_vector oidAndHash = HashAlgorithm::rsaOID(hashAlgo);
     oidAndHash.insert(oidAndHash.cend(), hash.cbegin(), hash.cend());
     return oidAndHash;
+}
+
+inline std::filesystem::path getExecutableDir()
+{
+    char buffer[1024];
+    std::size_t size = sizeof(buffer);
+
+#if defined(_WIN32)
+    DWORD len = GetModuleFileNameA(NULL, buffer, size);
+    if (len == 0 || len == size)
+        throw std::runtime_error("Failed to get executable path (Windows)");
+
+#elif defined(__APPLE__)
+    uint32_t len = size;
+    if (_NSGetExecutablePath(buffer, &len) != 0)
+        throw std::runtime_error("Buffer too small for executable path (macOS)");
+
+#elif defined(__linux__)
+    ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
+    if (len == -1)
+        throw std::runtime_error("Failed to read /proc/self/exe (Linux)");
+    buffer[len] = '\0';
+
+#else
+    throw std::runtime_error("Unsupported platform");
+#endif
+
+    std::filesystem::path exePath(buffer);
+    return exePath.parent_path(); // <-- This gives you the directory
 }
 
 } // namespace electronic_id
