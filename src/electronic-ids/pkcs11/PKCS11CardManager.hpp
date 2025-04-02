@@ -214,8 +214,6 @@ public:
         std::vector<CK_OBJECT_HANDLE> privateKeyHandle =
             findObject(session, CKO_PRIVATE_KEY, token.certID);
         if (privateKeyHandle.empty()) {
-            _log("Found %i private keys in slot, using key ID %x", privateKeyHandle.size(),
-                  token.certID.data());
             THROW(Pkcs11Error, "Cannot access private key handle: key not found");
         }
         if (privateKeyHandle.size() > 1) {

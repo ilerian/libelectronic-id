@@ -89,7 +89,7 @@ inline std::filesystem::path getExecutableDir()
     std::size_t size = sizeof(buffer);
 
 #if defined(_WIN32)
-    DWORD len = GetModuleFileNameA(NULL, buffer, size);
+    DWORD len = GetModuleFileNameA(NULL, buffer, (DWORD)size);
     if (len == 0 || len == size)
         throw std::runtime_error("Failed to get executable path (Windows)");
 
