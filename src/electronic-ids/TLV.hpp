@@ -108,8 +108,7 @@ struct TLV
         return path(TLV(data), tag, tags...);
     }
 
-    //constexpr operator bool() const noexcept { return begin != end; }
-    operator bool() const noexcept { return begin != end; }
+    constexpr operator bool() const noexcept { return begin != end; }
 };
 
 } // namespace electronic_id
